@@ -37,14 +37,6 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
-/* ─── Utility: get file extension from mime ───────────────────── */
-function getExt(mime: string): string {
-  if (mime.includes("png")) return "png";
-  if (mime.includes("webp")) return "webp";
-  if (mime.includes("gif")) return "gif";
-  if (mime.includes("avif")) return "avif";
-  return "jpg";
-}
 
 /* ─── Image Compressor ───────────────────────────────────────── */
 interface CompressedImage {
@@ -65,6 +57,7 @@ function compressImage(
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     const url = URL.createObjectURL(file);
     img.onload = () => {
       let w = img.width;
@@ -74,30 +67,36 @@ function compressImage(
         w = maxWidth;
       }
       const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = Math.round(w);
+      canvas.height = Math.round(h);
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         URL.revokeObjectURL(url);
         reject(new Error("Canvas not supported"));
         return;
       }
-      ctx.drawImage(img, 0, 0, w, h);
-      const outputType =
-        file.type === "image/png" ? "image/png" : "image/jpeg";
+      // White background so transparent PNGs don't become black
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Always output JPEG — quality param is ignored for PNG in toBlob
       canvas.toBlob(
         (blob) => {
           URL.revokeObjectURL(url);
-          if (blob) resolve(blob);
-          else reject(new Error("Compression failed"));
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error("Compression failed: toBlob returned null"));
+          }
         },
-        outputType,
+        "image/jpeg",
         quality,
       );
     };
-    img.onerror = () => {
+    img.onerror = (e) => {
       URL.revokeObjectURL(url);
-      reject(new Error("Failed to load image"));
+      console.error("[compressImage] Failed to load image:", file.name, e);
+      reject(new Error(`Failed to load image: ${file.name}`));
     };
     img.src = url;
   });
@@ -147,7 +146,8 @@ function ImageCompressorTool() {
                 : img,
             ),
           );
-        } catch {
+        } catch (err) {
+          console.error("[ImageCompressor] Error compressing:", item.name, err);
           setImages((prev) =>
             prev.map((img) =>
               img.id === item.id ? { ...img, status: "error" } : img,
@@ -170,13 +170,14 @@ function ImageCompressorTool() {
 
   const handleDownload = (item: CompressedImage) => {
     if (!item.compressedBlob) return;
-    const ext = getExt(item.compressedBlob.type || item.file.type);
     const baseName = item.name.replace(/\.[^.]+$/, "");
     const url = URL.createObjectURL(item.compressedBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${baseName}-compressed.${ext}`;
+    a.download = `${baseName}-compressed.jpg`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
@@ -185,9 +186,8 @@ function ImageCompressorTool() {
     const doneItems = images.filter((img) => img.status === "done" && img.compressedBlob);
     if (doneItems.length === 0) return;
     for (const item of doneItems) {
-      const ext = getExt(item.compressedBlob!.type || item.file.type);
       const baseName = item.name.replace(/\.[^.]+$/, "");
-      zip.file(`${baseName}-compressed.${ext}`, item.compressedBlob!);
+      zip.file(`${baseName}-compressed.jpg`, item.compressedBlob!);
     }
     const blob = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(blob);
