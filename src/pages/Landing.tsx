@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Image as ImageIcon,
@@ -12,7 +12,6 @@ import {
   Zap,
   Shield,
   Globe,
-  ChevronDown,
   X,
   FileImage,
   Package,
@@ -515,8 +514,7 @@ function ImageResizerTool() {
       setIsDragging(false);
       if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [], // handleFile is stable
   );
 
   const togglePlatform = (id: string) => {
@@ -580,13 +578,7 @@ function ImageResizerTool() {
     URL.revokeObjectURL(url);
   };
 
-  useEffect(() => {
-    return () => {
-      if (sourcePreview) URL.revokeObjectURL(sourcePreview);
-      results.forEach((r) => URL.revokeObjectURL(r.preview));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
 
   return (
     <div className="space-y-5">
