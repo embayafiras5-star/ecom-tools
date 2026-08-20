@@ -3,4 +3,4 @@ Allow: /
 Disallow: /auth
 Disallow: /dashboard
 
-Sitemap: https://picforge.app/sitemap.xml
+Sitemap: https://ecomtools.freebuff.app/sitemap.xml
