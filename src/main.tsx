@@ -10,6 +10,15 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import { RobotsTxt, SitemapXml } from "@/components/StaticFiles";
 import "./index.css";
 
+// Register service worker for offline PWA support
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.warn("[SW] Registration failed:", err);
+    });
+  });
+}
+
 // Lazy load route components for better code splitting
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));

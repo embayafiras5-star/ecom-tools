@@ -1,17 +1,20 @@
 {
-  "name": "freebuff.com application",
-  "short_name": "freebuff.com",
-  "description": "freebuff.com application",
+  "name": "Ecom Tools — Image Compressor & Resizer",
+  "short_name": "Ecom Tools",
+  "description": "Compress and resize product images for TikTok, Instagram, Shopify, and Amazon. All processing runs in your browser.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "orientation": "any",
+  "background_color": "#f0f4ff",
+  "theme_color": "#4f46e5",
+  "categories": ["utilities", "productivity"],
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "any",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
